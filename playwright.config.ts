@@ -1,71 +1,95 @@
 import { defineConfig, devices } from '@playwright/test';
 
-/**
- * @see https://playwright.dev/docs/test-configuration
- */
+
+//  Project scoping strategy:
+//  api          — `tests/api/**` + `tests/integration/**` (HTTP via `request`; integration UI test also uses `page`)
+// chromium     — UI, security, and accessibility (axe) specs. Excludes @responsive (needs specific mobile viewport).
+// firefox      — Same subset as chromium.
+// webkit       — Same as firefox.
+// mobile-chrome / mobile-safari — @responsive tagged tests only, matched across UI + security + accessibility specs.
+// Spec files are grouped by feature concern under tests/.
+
+const API_SPECS = [
+  '**/api/**/*.spec.ts',
+  '**/integration/**/*.spec.ts',
+];
+
+const UI_SPECS_DESKTOP = [
+  '**/ui/**/*.spec.ts',
+  '**/security/**/*.spec.ts',
+  '**/accessibility/**/*.spec.ts',
+];
+
 export default defineConfig({
   testDir: './tests',
-  /* Run tests in files in parallel */
-  fullyParallel: true,
-  /* Fail the build on CI if you accidentally left test.only in the source code. */
-  forbidOnly: !!process.env.CI,
-  /* Retry on CI only */
-  retries: process.env.CI ? 2 : 0,
-  /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? 1 : undefined,
-  /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: 'html',
-  /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
-  use: {
-    /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: 'http://localhost:3000',
+  testIgnore: ['**/unit/**', '**/support/**'],
 
-    /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-    trace: 'on-first-retry',
+  fullyParallel: true,
+  forbidOnly: !!process.env.CI,
+  retries: process.env.CI ? 2 : 0,
+  // Cap workers locally so a single `next dev` instance is not overwhelmed (avoids stuck "Loading books…" / failed GETs).
+  workers: process.env.CI ? 2 : 4,
+
+  reporter: process.env.CI
+    ? [['junit', { outputFile: 'test-results/results.xml' }], ['allure-playwright'], ['list']]
+    : [['html'], ['allure-playwright'], ['list']],
+
+  use: {
+    baseURL: process.env.BASE_URL ?? 'http://localhost:3000',
+    // CI YAML publishes `test-results/` — retain trace zips on every final failure (see TESTING.md).
+    trace: 'retain-on-failure',
+    screenshot: 'only-on-failure',
+    video: 'on-first-retry',
   },
 
-  /* Configure projects for major browsers */
   projects: [
+    // API-only: request context, one browser is sufficient
+    {
+      name: 'api',
+      testMatch: API_SPECS,
+      use: {
+        ...devices['Desktop Chrome'],
+      },
+    },
+
+    // Desktop UI: all three browsers
     {
       name: 'chromium',
+      testMatch: UI_SPECS_DESKTOP,
+      grepInvert: /@responsive/,
       use: { ...devices['Desktop Chrome'] },
     },
-
     {
       name: 'firefox',
+      testMatch: UI_SPECS_DESKTOP,
+      grepInvert: /@responsive/,
       use: { ...devices['Desktop Firefox'] },
     },
-
     {
       name: 'webkit',
+      testMatch: UI_SPECS_DESKTOP,
+      grepInvert: /@responsive/,
       use: { ...devices['Desktop Safari'] },
     },
 
-    /* Test against mobile viewports. */
-    // {
-    //   name: 'Mobile Chrome',
-    //   use: { ...devices['Pixel 5'] },
-    // },
-    // {
-    //   name: 'Mobile Safari',
-    //   use: { ...devices['iPhone 12'] },
-    // },
-
-    /* Test against branded browsers. */
-    // {
-    //   name: 'Microsoft Edge',
-    //   use: { ...devices['Desktop Edge'], channel: 'msedge' },
-    // },
-    // {
-    //   name: 'Google Chrome',
-    //   use: { ...devices['Desktop Chrome'], channel: 'chrome' },
-    // },
+    // Responsive: mobile viewports only — picks up @responsive describes in any UI spec
+    {
+      name: 'mobile-chrome',
+      testMatch: UI_SPECS_DESKTOP,
+      grep: /@responsive/,
+      use: { ...devices['Pixel 5'] },
+    },
+    {
+      name: 'mobile-safari',
+      testMatch: UI_SPECS_DESKTOP,
+      grep: /@responsive/,
+      use: { ...devices['iPhone 12'] },
+    },
   ],
 
-  /* Run your local dev server before starting the tests */
   webServer: {
     command: 'npm run dev',
-    url: 'http://localhost:3000',
+    url: process.env.BASE_URL ?? 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
   },
 });

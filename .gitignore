@@ -37,3 +37,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# allure    
+allure-report/
+allure-results/
+
+# local Playwright tee logs
+playwright-last-run.log
