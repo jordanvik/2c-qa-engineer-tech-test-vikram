@@ -12,7 +12,7 @@ This is a technical test for QA Engineer applicants. The application is a simple
 - **Add Book Form**: Allows users to add new books to the library with validation
 
 ### Technical Stack
-- **Frontend**: Next.js 14 with TypeScript and Tailwind CSS
+- **Frontend**: Next.js 15 with TypeScript and Tailwind CSS
 - **Backend**: Next.js API routes (fake backend with in-memory storage)
 - **Testing**: Playwright (E2E) and Vitest (Unit) configured and ready to use
 
@@ -24,18 +24,20 @@ This is a technical test for QA Engineer applicants. The application is a simple
 
 ### Installation
 
-1. Clone the repository
-2. Install dependencies:
+1. Clone the repository (or unzip the tech test).
+2. **Open a terminal in this folder** — the one that contains `package.json` and this `README.md`.  
+   If you are in a parent directory (for example `Book App`) and see `npm error enoent` / “could not find `package.json`”, change into the project root first, e.g. `cd 2c-qa-engineer-tech-test-vikram` (use your actual folder name).
+3. Install dependencies:
    ```bash
    npm install
    ```
 
-3. Start the development server:
+4. Start the development server:
    ```bash
    npm run dev
    ```
 
-4. Open [http://localhost:3000](http://localhost:3000) in your browser
+5. Open [http://localhost:3000](http://localhost:3000) in your browser
 
 ### Available Scripts
 
@@ -43,8 +45,28 @@ This is a technical test for QA Engineer applicants. The application is a simple
 - `npm run build` - Build for production
 - `npm run start` - Start production server
 - `npm run lint` - Run ESLint
-- `npm run test` - Run unit tests with Vitest
+- `npm run test` - Run unit tests with Vitest (watch mode)
+- `npm run test:coverage` - Run unit tests with V8 coverage report
 - `npm run test:e2e` - Run E2E tests with Playwright
+- `npm run allure:generate` - Generate Allure HTML report from `allure-results/`
+- `npm run allure:open` - Open the generated Allure report in a browser
+- `npm run allure:report` - Generate and open Allure report in one step
+
+> **Note:** The `allure:*` scripts require the [Allure CLI](https://allurereport.org/docs/install/) installed globally (`npm install -g allure-commandline`).
+
+See [TESTING.md](./TESTING.md) for full details on running tests, filtering by tag, trace-on-failure behaviour, and CI integration.
+
+### Automated tests (layout)
+
+| Path | Role |
+|------|------|
+| `tests/ui/` | Product browser journeys — library, add-book, responsive, `test.fail()` bug regressions |
+| `tests/accessibility/` | axe WCAG AA smoke; **BUG-015** (`test.fail()` on home/detail until contrast fixed) + JSON report attachments |
+| `tests/api/` | `books-api.spec.ts` (contract, boundary, repeat), `books-api-path-hygiene.spec.ts`, `books-api-injection-literals.spec.ts` |
+| `tests/security/` | Stored-markup smoke on `/book/[id]` after API create |
+| `tests/integration/` | POST `/api/books` then verify catalog JSON and/or home + detail UI |
+| `tests/unit/` | Vitest — same screens as UI tests but mocked `fetch` (fast regression on render logic) |
+| `tests/support/` | Fixtures, POMs, clients, factories (not executed as specs) |
 
 ## API Endpoints
 
