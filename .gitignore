@@ -44,3 +44,6 @@ allure-results/
 
 # local Playwright tee logs
 playwright-last-run.log
+
+# local submission bundle (do not commit)
+qa-reports-for-submission.zip

@@ -139,7 +139,7 @@ Run all commands from the **repository root**.
 | **Open Allure report** | `npm run allure:open` |
 | **Generate + open Allure report** | `npm run allure:report` |
 
-> The `allure:*` scripts require the [Allure CLI](https://allurereport.org/docs/install/) installed globally (`npm install -g allure-commandline`).
+> **`allure:*` scripts** use `npx allure-commandline` and need a **JDK** on your PATH (`java -version`). After `npm run allure:generate`, **do not open `allure-report/index.html` via `file://`** in the browser — Chrome blocks the report’s requests to local JSON files, so widgets stay on **“Loading…”**. Use **`npm run allure:open`** instead; it serves the folder over **http://localhost** and the dashboard loads correctly.
 
 ---
 
